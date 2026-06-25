@@ -8,24 +8,8 @@ use App\Models\Kost;
 use App\Models\User as UserModel;
 use Illuminate\Support\Facades\Route;
 
-// ───────── Public Routes ─────────
-Route::get('/', function () {
-    // Kueri dibersihkan menggunakan import model di atas
-    $featured = Kost::featured()->active()
-        ->with(['primaryPhoto', 'reviews'])
-        ->limit(6)
-        ->get();
-
-    $cities = Kost::active()->distinct()->pluck('city');
-
-    $stats = [
-        'total_kost'   => Kost::active()->count(),
-        'total_users'  => UserModel::where('role', 'user')->count(),
-        'total_cities' => Kost::active()->distinct('city')->count('city'),
-    ];
-
-    return view('welcome', compact('featured', 'cities', 'stats'));
-})->name('home');
+// ───────── Public Routes ─────────// Ganti blok Route::get lama kamu dengan ini:
+Route::get('/', [KostController::class, 'home'])->name('home');
 
 Route::get('/kost', [KostController::class, 'index'])->name('kost.index');
 Route::get('/kost/{kost:slug}', [KostController::class, 'show'])->name('kost.show');
