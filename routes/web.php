@@ -4,18 +4,26 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\KostController;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\User;
+use App\Models\Kost;
+use App\Models\User as UserModel;
 use Illuminate\Support\Facades\Route;
 
 // ───────── Public Routes ─────────
 Route::get('/', function () {
-    $featured = \App\Models\Kost::featured()->active()
-        ->with(['primaryPhoto', 'reviews'])->limit(6)->get();
-    $cities = \App\Models\Kost::active()->distinct()->pluck('city');
+    // Kueri dibersihkan menggunakan import model di atas
+    $featured = Kost::featured()->active()
+        ->with(['primaryPhoto', 'reviews'])
+        ->limit(6)
+        ->get();
+
+    $cities = Kost::active()->distinct()->pluck('city');
+
     $stats = [
-        'total_kost'  => \App\Models\Kost::active()->count(),
-        'total_users' => \App\Models\User::where('role', 'user')->count(),
-        'total_cities'=> \App\Models\Kost::active()->distinct('city')->count('city'),
+        'total_kost'   => Kost::active()->count(),
+        'total_users'  => UserModel::where('role', 'user')->count(),
+        'total_cities' => Kost::active()->distinct('city')->count('city'),
     ];
+
     return view('welcome', compact('featured', 'cities', 'stats'));
 })->name('home');
 
@@ -41,6 +49,7 @@ Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
     Route::get('/dashboard', [User\DashboardController::class, 'index'])->name('dashboard');
 
     // Profile
+    // (Route profile Anda tetap aman menggunakan AuthController)
     Route::get('/profile', [AuthController::class, 'showProfile'])->name('profile');
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     Route::put('/password', [AuthController::class, 'changePassword'])->name('password.update');
@@ -64,6 +73,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/kost/photo/{photo}', [Admin\KostController::class, 'deletePhoto'])->name('kost.photo.delete');
 
     // Room CRUD (nested under kost)
+    // (Menggunakan model binding yang konsisten)
     Route::post('/kost/{kost}/rooms', [Admin\RoomController::class, 'store'])->name('kost.rooms.store');
     Route::put('/kost/{kost}/rooms/{room}', [Admin\RoomController::class, 'update'])->name('kost.rooms.update');
     Route::delete('/kost/{kost}/rooms/{room}', [Admin\RoomController::class, 'destroy'])->name('kost.rooms.destroy');
