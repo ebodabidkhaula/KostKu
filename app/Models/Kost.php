@@ -47,9 +47,13 @@ class Kost extends Model
         return $this->hasMany(KostPhoto::class)->orderBy('order');
     }
 
+    /**
+     * FIX: whereRaw dipakai agar PostgreSQL menerima literal boolean "true",
+     * bukan parameter binding yang ditebak sebagai integer oleh pdo_pgsql.
+     */
     public function primaryPhoto()
     {
-        return $this->hasOne(KostPhoto::class)->where('is_primary', true);
+        return $this->hasOne(KostPhoto::class)->whereRaw('is_primary = true');
     }
 
     public function rooms()
@@ -62,9 +66,12 @@ class Kost extends Model
         return $this->hasMany(Booking::class);
     }
 
+    /**
+     * FIX: sama seperti primaryPhoto(), hindari ->where('is_approved', true)
+     */
     public function reviews()
     {
-        return $this->hasMany(Review::class)->where('is_approved', true);
+        return $this->hasMany(Review::class)->whereRaw('is_approved = true');
     }
 
     public function creator()
@@ -98,13 +105,6 @@ class Kost extends Model
         return $query->where('status', 'active');
     }
 
-    /**
-     * FIX: gunakan whereRaw dengan literal SQL "true",
-     * bukan ->where('is_featured', true) yang dibind sebagai parameter.
-     * Ini menghindari bug pdo_pgsql yang membind boolean PHP sebagai
-     * integer tanpa tipe eksplisit, sehingga PostgreSQL melempar:
-     * "operator does not exist: boolean = integer"
-     */
     public function scopeFeatured($query)
     {
         return $query->whereRaw('is_featured = true');
