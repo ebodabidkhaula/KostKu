@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -44,7 +42,6 @@ class Kost extends Model
     }
 
     // --- RELATIONS ---
-
     public function photos()
     {
         return $this->hasMany(KostPhoto::class)->orderBy('order');
@@ -76,20 +73,17 @@ class Kost extends Model
     }
 
     // --- ACCESSORS ---
-
     public function getThumbnailUrlAttribute(): string
     {
         if ($this->thumbnail) {
             $projectId = 'itkwzhuxntqnisniesrd';
             return "https://{$projectId}.storage.supabase.co/storage/v1/object/public/kostQu/{$this->thumbnail}";
         }
-
         return asset('images/default-kost.png');
     }
 
     public function getAverageRatingAttribute(): float
     {
-        // Di-cast ke (float) untuk mencegah error tipe data dari PostgreSQL ke strict PHP return type
         return (float) ($this->reviews()->avg('rating') ?? 0.0);
     }
 
@@ -99,20 +93,26 @@ class Kost extends Model
     }
 
     // --- SCOPES ---
-
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
     }
 
+    /**
+     * FIX: gunakan whereRaw dengan literal SQL "true",
+     * bukan ->where('is_featured', true) yang dibind sebagai parameter.
+     * Ini menghindari bug pdo_pgsql yang membind boolean PHP sebagai
+     * integer tanpa tipe eksplisit, sehingga PostgreSQL melempar:
+     * "operator does not exist: boolean = integer"
+     */
     public function scopeFeatured($query)
     {
-        return $query->where('is_featured', true);
+        return $query->whereRaw('is_featured = true');
     }
 
     public function scopeSearch($query, $keyword)
     {
-        return $query->where(function($q) use ($keyword) {
+        return $query->where(function ($q) use ($keyword) {
             $q->where('name', 'like', "%{$keyword}%")
               ->orWhere('address', 'like', "%{$keyword}%")
               ->orWhere('city', 'like', "%{$keyword}%")
