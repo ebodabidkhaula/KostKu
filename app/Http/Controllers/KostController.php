@@ -4,11 +4,34 @@ namespace App\Http\Controllers;
 
 use App\Models\Kost;
 use App\Models\Review;
+use App\Models\User as UserModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class KostController extends Controller
 {
+    /**
+     * Menangani Halaman Utama (Welcome Page)
+     * Dipindahkan ke sini untuk menghindari bug route closure cache di Railway
+     */
+    public function home()
+    {
+        $featured = Kost::featured()->active()
+            ->with(['primaryPhoto', 'reviews'])
+            ->limit(6)
+            ->get();
+
+        $cities = Kost::active()->distinct()->pluck('city');
+
+        $stats = [
+            'total_kost'   => Kost::active()->count(),
+            'total_users'  => UserModel::where('role', 'user')->count(),
+            'total_cities' => Kost::active()->distinct('city')->count('city'),
+        ];
+
+        return view('welcome', compact('featured', 'cities', 'stats'));
+    }
+
     public function index(Request $request)
     {
         $query = Kost::with(['primaryPhoto', 'reviews'])->active();
