@@ -19,6 +19,8 @@ return [
         'prefix_indexes' => true,
         'search_path' => 'public', // Diubah di sini
         'sslmode' => 'prefer',
+        'options' => [
+            PDO::ATTR_EMULATE_PREPARES => true,
     ],
         'sqlite' => [
             'driver' => 'sqlite',
