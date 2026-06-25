@@ -13,13 +13,25 @@ class KostController extends Controller
     {
         $query = Kost::with(['primaryPhoto', 'reviews'])->active();
 
-        if ($request->search) $query->search($request->search);
-        if ($request->type) $query->where('type', $request->type);
-        if ($request->city) $query->where('city', $request->city);
-        if ($request->min_price) $query->where('price_monthly', '>=', $request->min_price);
-        if ($request->max_price) $query->where('price_monthly', '<=', $request->max_price);
+        if ($request->search) {
+            $query->search($request->search);
+        }
+        if ($request->type) {
+            $query->where('type', $request->type);
+        }
+        if ($request->city) {
+            $query->where('city', $request->city);
+        }
+        if ($request->min_price) {
+            $query->where('price_monthly', '>=', $request->min_price);
+        }
+        if ($request->max_price) {
+            $query->where('price_monthly', '<=', $request->max_price);
+        }
+        
         if ($request->facilities) {
             foreach ($request->facilities as $fac) {
+                // Memastikan pencarian JSON ramah terhadap PostgreSQL
                 $query->whereJsonContains('facilities', $fac);
             }
         }
@@ -34,6 +46,8 @@ class KostController extends Controller
 
         $kosts = $query->paginate(12)->withQueryString();
         $cities = Kost::active()->distinct()->pluck('city');
+        
+        // Memastikan kueri featured menggunakan format scope terupdate
         $featured = Kost::featured()->active()->with('primaryPhoto')->limit(3)->get();
 
         return view('kost.index', compact('kosts', 'cities', 'featured'));
@@ -62,7 +76,7 @@ class KostController extends Controller
             'comment' => ['required', 'string', 'min:10', 'max:1000'],
         ]);
 
-        // Cegah user mengulas kost yang sama lebih dari sekali
+        // Menggunakan exists() yang kompatibel dengan PostgreSQL
         $alreadyReviewed = Review::where('user_id', Auth::id())
             ->where('kost_id', $kost->id)
             ->exists();
