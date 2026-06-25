@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 
 class Kost extends Model
 {
@@ -44,6 +43,8 @@ class Kost extends Model
         });
     }
 
+    // --- RELATIONS ---
+
     public function photos()
     {
         return $this->hasMany(KostPhoto::class)->orderBy('order');
@@ -74,26 +75,30 @@ class Kost extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function getThumbnailUrlAttribute()
-{
-    if ($this->thumbnail) {
-        $projectId = 'itkwzhuxntqnisniesrd';
+    // --- ACCESSORS ---
 
-        return "https://{$projectId}.storage.supabase.co/storage/v1/object/public/kostQu/{$this->thumbnail}";
+    public function getThumbnailUrlAttribute(): string
+    {
+        if ($this->thumbnail) {
+            $projectId = 'itkwzhuxntqnisniesrd';
+            return "https://{$projectId}.storage.supabase.co/storage/v1/object/public/kostQu/{$this->thumbnail}";
+        }
+
+        return asset('images/default-kost.png');
     }
-
-    return asset('images/default-kost.png');
-}
 
     public function getAverageRatingAttribute(): float
     {
-        return $this->reviews()->avg('rating') ?? 0;
+        // Di-cast ke (float) untuk mencegah error tipe data dari PostgreSQL ke strict PHP return type
+        return (float) ($this->reviews()->avg('rating') ?? 0.0);
     }
 
     public function getPriceFormattedAttribute(): string
     {
-        return 'Rp ' . number_format($this->price_monthly, 0, ',', '.');
+        return 'Rp ' . number_format((float) $this->price_monthly, 0, ',', '.');
     }
+
+    // --- SCOPES ---
 
     public function scopeActive($query)
     {
