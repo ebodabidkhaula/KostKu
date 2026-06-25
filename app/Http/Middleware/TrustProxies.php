@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Middleware\TrustProxies as Middleware;
@@ -7,7 +6,10 @@ use Illuminate\Http\Request;
 
 class TrustProxies extends Middleware
 {
-    protected $proxies;
+    /**
+     * FIX: trust semua proxy (Render/Railway pakai proxy dinamis untuk SSL termination)
+     */
+    protected $proxies = '*';
 
     protected $headers =
         Request::HEADER_X_FORWARDED_FOR |
